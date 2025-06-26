@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 自动化插件 SDK 项目结构指南
+
+## 项目概述
+这是一个用于 ChoiceForm 自动化平台的插件 SDK，提供插件开发、构建、验证和发布的完整工具链。
+
+## 核心文件结构
+
+### 主要入口文件
+- [src/index.ts](mdc:src/index.ts) - SDK 主入口，导出所有公共 API
+- [src/types/index.ts](mdc:src/types/index.ts) - 完整的类型定义，匹配 automation 平台数据结构
+- [src/base/index.ts](mdc:src/base/index.ts) - 插件基类定义（PluginBase、TriggerNode、ActionNode 等）
+
+### CLI 工具
+- [src/cli/index.ts](mdc:src/cli/index.ts) - CLI 主入口
+- [src/cli/commands/create.ts](mdc:src/cli/commands/create.ts) - 创建插件命令
+- [src/cli/commands/build.ts](mdc:src/cli/commands/build.ts) - 构建插件命令
+- [src/cli/commands/validate.ts](mdc:src/cli/commands/validate.ts) - 验证插件命令
+- [src/cli/commands/publish.ts](mdc:src/cli/commands/publish.ts) - 发布插件命令
+
+### 插件系统
+- [src/registry/index.ts](mdc:src/registry/index.ts) - 插件注册表管理
+- [src/utils/index.ts](mdc:src/utils/index.ts) - 工具函数集合
+
+## 开发规则
+
+### 包管理
+- **必须使用** pnpm 而不是 npm 或 yarn
+- **禁止使用** `any` 类型
+- **不要启动** pnpm dev 服务（除非明确需要）
+
+### 代码风格
+- 使用 TypeScript 严格模式
+- 所有类型都应该明确定义
+- Git 提交信息使用英文
+- 代码注释和文档使用中文
+
+### 项目结构原则
+- 插件按业务域分类（communication、ai、database、storage 等）
+- 每个插件必须包含 manifest 和 registry 文件
+- 使用统一的端口配置和工具栏配置
