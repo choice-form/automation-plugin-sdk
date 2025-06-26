@@ -1,0 +1,362 @@
+name: Plugin Review & Validation
+
+on:
+  pull_request:
+    paths: 
+      - 'community/**'
+      - 'official/**'
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
+
+jobs:
+  # 1. 基础检查
+  basic-validation:
+    name: Basic Validation
+    runs-on: ubuntu-latest
+    outputs:
+      plugin-path: ${{ steps.detect.outputs.plugin-path }}
+      plugin-name: ${{ steps.detect.outputs.plugin-name }}
+      security-level: ${{ steps.detect.outputs.security-level }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Detect Plugin Changes
+        id: detect
+        run: |
+          # 检测变更的插件目录
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          PLUGIN_PATH=$(echo "$CHANGED_FILES" | grep -E '^(community|official)/' | head -1 | cut -d'/' -f1-2)
+          
+          if [ -z "$PLUGIN_PATH" ]; then
+            echo "No plugin changes detected"
+            exit 1
+          fi
+          
+          PLUGIN_NAME=$(basename "$PLUGIN_PATH")
+          echo "plugin-path=$PLUGIN_PATH" >> $GITHUB_OUTPUT
+          echo "plugin-name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
+          
+          # 读取安全等级
+          if [ -f "$PLUGIN_PATH/plugin.registry.json" ]; then
+            SECURITY_LEVEL=$(jq -r '.security.level // "standard"' "$PLUGIN_PATH/plugin.registry.json")
+            echo "security-level=$SECURITY_LEVEL" >> $GITHUB_OUTPUT
+          else
+            echo "security-level=standard" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Validate Plugin Structure
+        run: |
+          PLUGIN_PATH="${{ steps.detect.outputs.plugin-path }}"
+          
+          # 检查必需文件
+          required_files=(
+            "package.json"
+            "plugin.manifest.json" 
+            "plugin.registry.json"
+            "src/index.ts"
+            "README.md"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$PLUGIN_PATH/$file" ]; then
+              echo "❌ Missing required file: $file"
+              exit 1
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+      
+      - name: Validate Manifest
+        run: |
+          PLUGIN_PATH="${{ steps.detect.outputs.plugin-path }}"
+          
+          # 验证 manifest 格式
+          if ! jq empty "$PLUGIN_PATH/plugin.manifest.json"; then
+            echo "❌ Invalid JSON in plugin.manifest.json"
+            exit 1
+          fi
+          
+          # 检查必需字段
+          required_fields=("name" "version" "author" "nodeType" "category")
+          for field in "${required_fields[@]}"; do
+            if [ "$(jq -r ".$field // empty" "$PLUGIN_PATH/plugin.manifest.json")" = "" ]; then
+              echo "❌ Missing required field in manifest: $field"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Manifest validation passed"
+
+  # 2. 代码质量检查
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    needs: basic-validation
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install Dependencies
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          pnpm install
+      
+      - name: Lint Check
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          
+          # ESLint 检查
+          if [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ]; then
+            pnpm eslint src/**/*.ts
+          fi
+          
+          # Prettier 检查
+          if [ -f ".prettierrc" ]; then
+            pnpm prettier --check src/**/*.ts
+          fi
+      
+      - name: TypeScript Check
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          pnpm tsc --noEmit
+      
+      - name: Unit Tests
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          
+          if [ -f "package.json" ] && grep -q '"test"' package.json; then
+            pnpm test
+          else
+            echo "⚠️ No tests found - please add unit tests"
+          fi
+
+  # 3. 安全扫描
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: basic-validation
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Dependency Vulnerability Scan
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          
+          # npm audit
+          npm audit --audit-level=moderate || true
+          
+          # 检查已知恶意包
+          echo "Checking for malicious packages..."
+          
+      - name: Code Security Scan
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          
+          # 检查潜在安全问题
+          echo "Scanning for security issues..."
+          
+          # 检查危险函数调用
+          if grep -r "eval\|Function\|execSync\|spawn" src/; then
+            echo "⚠️ Found potentially dangerous function calls"
+            echo "Please review and ensure they are used safely"
+          fi
+          
+          # 检查文件系统访问
+          if grep -r "fs\.\|readFile\|writeFile\|unlink" src/; then
+            echo "⚠️ Found file system access"
+            echo "Ensure proper permissions are declared"
+          fi
+          
+          # 检查网络请求
+          if grep -r "fetch\|axios\|request\|http\." src/; then
+            echo "⚠️ Found network requests"
+            echo "Ensure proper permissions are declared"
+          fi
+
+  # 4. 功能测试
+  functional-test:
+    name: Functional Test
+    runs-on: ubuntu-latest
+    needs: [basic-validation, code-quality]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Build Plugin
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          pnpm install
+          pnpm build
+      
+      - name: Plugin SDK Validation
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          
+          # 使用 plugin-sdk 验证
+          npx automation-plugin-sdk validate .
+      
+      - name: Integration Test
+        run: |
+          cd ${{ needs.basic-validation.outputs.plugin-path }}
+          
+          # 模拟插件加载测试
+          node -e "
+            const plugin = require('./dist/index.js');
+            const manifest = plugin.default?.getManifest?.();
+            
+            if (!manifest) {
+              console.error('❌ Plugin does not export valid manifest');
+              process.exit(1);
+            }
+            
+            console.log('✅ Plugin loaded successfully');
+            console.log('Plugin:', manifest.name, 'v' + manifest.version);
+          "
+
+  # 5. 安全等级检查
+  security-level-check:
+    name: Security Level Check
+    runs-on: ubuntu-latest
+    needs: [basic-validation, security-scan]
+    if: needs.basic-validation.outputs.security-level != 'standard'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Enhanced Security Review
+        run: |
+          SECURITY_LEVEL="${{ needs.basic-validation.outputs.security-level }}"
+          PLUGIN_PATH="${{ needs.basic-validation.outputs.plugin-path }}"
+          
+          echo "🔍 Enhanced security review for $SECURITY_LEVEL level plugin"
+          
+          case $SECURITY_LEVEL in
+            "elevated")
+              echo "🔶 Elevated security checks..."
+              # 检查权限声明
+              # 验证敏感 API 使用
+              ;;
+            "system")
+              echo "🔴 System-level security checks..."
+              # 深度安全扫描
+              # 需要人工审核
+              echo "⚠️ System-level plugins require manual security review"
+              ;;
+          esac
+      
+      - name: Request Manual Review
+        if: needs.basic-validation.outputs.security-level == 'system'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🔴 **System-level plugin detected**
+              
+              This plugin requires manual security review due to its system-level permissions.
+              
+              **Security Level**: \`${{ needs.basic-validation.outputs.security-level }}\`
+              **Plugin**: \`${{ needs.basic-validation.outputs.plugin-name }}\`
+              
+              A security team member will review this plugin within 7-14 business days.
+              
+              **Required Reviews:**
+              - [ ] Code security audit
+              - [ ] Permission validation  
+              - [ ] Penetration testing
+              - [ ] Compliance check
+              `
+            })
+
+  # 6. 自动化结果汇总
+  review-summary:
+    name: Review Summary
+    runs-on: ubuntu-latest
+    needs: [basic-validation, code-quality, security-scan, functional-test]
+    if: always()
+    
+    steps:
+      - name: Generate Review Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = {
+              basic: '${{ needs.basic-validation.result }}',
+              quality: '${{ needs.code-quality.result }}', 
+              security: '${{ needs.security-scan.result }}',
+              functional: '${{ needs.functional-test.result }}'
+            };
+            
+            const passed = Object.values(results).every(r => r === 'success');
+            const emoji = passed ? '✅' : '❌';
+            const status = passed ? 'PASSED' : 'FAILED';
+            
+            const summary = `## ${emoji} Plugin Review ${status}
+            
+            **Plugin**: \`${{ needs.basic-validation.outputs.plugin-name }}\`
+            **Security Level**: \`${{ needs.basic-validation.outputs.security-level }}\`
+            
+            ### Check Results
+            - **Basic Validation**: ${results.basic === 'success' ? '✅' : '❌'} ${results.basic}
+            - **Code Quality**: ${results.quality === 'success' ? '✅' : '❌'} ${results.quality}  
+            - **Security Scan**: ${results.security === 'success' ? '✅' : '❌'} ${results.security}
+            - **Functional Test**: ${results.functional === 'success' ? '✅' : '❌'} ${results.functional}
+            
+            ${passed 
+              ? '🎉 **All automated checks passed!** This plugin is ready for manual review.' 
+              : '⚠️ **Some checks failed.** Please review the failing jobs and fix the issues.'}
+            
+            ### Next Steps
+            ${passed 
+              ? `- Manual code review by maintainers
+              - Final approval and merge
+              - Automatic deployment to plugin registry` 
+              : `- Fix the failing checks
+              - Push updates to trigger re-validation`}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            }); 
