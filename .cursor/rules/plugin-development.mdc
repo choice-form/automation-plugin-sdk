@@ -3,3 +3,97 @@ description:
 globs:
 alwaysApply: false
 ---
+# 插件开发规范
+
+## 插件类型
+SDK 支持以下插件类型，每种类型继承对应的基类：
+
+### 节点类型
+- **TriggerNode** - 触发器节点（监听事件、定时任务等）
+- **ActionNode** - 动作节点（API 调用、通知等）
+- **TransformNode** - 转换节点（数据处理和修改）
+- **AINode** - AI 节点（AI 驱动的处理）
+- **ControlNode** - 控制节点（流程控制、条件判断等）
+
+### 业务域分类
+- **communication** - 通信类（Discord、Slack、Email 等）
+- **ai** - AI 和机器学习服务
+- **database** - 数据库操作
+- **storage** - 文件存储和云存储
+- **analytics** - 数据分析和追踪
+- **crm** - 客户关系管理
+- **finance** - 支付和金融服务
+- **productivity** - 生产力工具
+- **system** - 系统工具和核心功能
+
+## 插件文件结构
+每个插件必须包含以下文件：
+
+### 必需文件
+- `src/index.ts` - 插件主实现
+- `plugin.manifest.json` - 插件清单文件
+- `plugin.registry.json` - 插件注册表文件
+- `package.json` - 包配置文件
+- `icon.svg` - 插件图标
+- `README.md` - 插件文档
+
+### 可选文件
+- `tests/` - 测试文件目录
+- `tsconfig.json` - TypeScript 配置
+- `jest.config.js` - Jest 测试配置
+
+## 开发流程
+
+### 创建插件
+```bash
+# 使用 CLI 创建新插件
+npx @choiceform/automation-sdk create
+
+# 或使用简化命令
+automation-sdk create
+```
+
+### 开发和测试
+```bash
+# 安装依赖
+pnpm install
+
+# 开发模式（监听文件变化）
+pnpm dev
+
+# 运行测试
+pnpm test
+
+# 构建插件
+pnpm build
+```
+
+### 验证和发布
+```bash
+# 验证插件
+pnpm validate
+
+# 发布插件
+automation-sdk publish
+```
+
+## 插件实现要点
+
+### 基类继承
+- 所有插件必须继承对应的基类（如 ActionNode、TriggerNode 等）
+- 实现必需的抽象方法：`execute()`、`getManifest()`、`getPortConfig()`
+
+### 端口配置
+- 定义清晰的输入输出端口
+- 使用合适的端口角色（role）和数据类型
+- 为必需端口设置 `required: true`
+
+### 错误处理
+- 使用 `ExecutionResult` 返回执行结果
+- 提供详细的错误信息
+- 实现优雅的错误恢复机制
+
+### 类型安全
+- 严格遵循 TypeScript 类型定义
+- 使用 [src/types/index.ts](mdc:src/types/index.ts) 中的类型
+- 避免使用 `any` 类型

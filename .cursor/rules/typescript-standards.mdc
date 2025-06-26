@@ -3,3 +3,98 @@ description:
 globs:
 alwaysApply: false
 ---
+# TypeScript 和代码规范
+
+## TypeScript 规范
+
+### 类型定义
+- **禁止使用** `any` 类型，始终明确定义类型
+- 使用 [src/types/index.ts](mdc:src/types/index.ts) 中的标准类型
+- 为复杂对象定义接口而不是内联类型
+
+### 正确的类型使用
+```typescript
+// ✅ 正确
+interface PluginConfig {
+  name: string;
+  version: string;
+  enabled: boolean;
+}
+
+// ❌ 错误
+const config: any = { name: 'test', version: '1.0.0' };
+```
+
+### 导入导出规范
+- 使用命名导出而非默认导出
+- 从 [src/index.ts](mdc:src/index.ts) 统一导出公共 API
+- 使用 `type` 关键字导出类型
+
+```typescript
+// ✅ 正确
+export type { PluginManifest, ExecutionResult } from './types';
+export { PluginBase, ActionNode } from './base';
+
+// ❌ 错误
+export default class Plugin { }
+```
+
+## 代码结构规范
+
+### 类的组织
+- 继承关系：所有插件继承对应基类
+- 方法顺序：constructor -> public methods -> protected methods -> private methods
+- 使用抽象类定义基类接口
+
+### 错误处理
+- 使用 `ExecutionResult` 类型返回执行结果
+- 提供详细的错误信息和上下文
+- 实现 try-catch 错误捕获
+
+```typescript
+// ✅ 正确
+async execute(inputs: Record<string, unknown>, context: PluginExecutionContext): Promise<ExecutionResult> {
+  try {
+    // 执行逻辑
+    return { success: true, data: result };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+}
+```
+
+## 项目配置
+
+### tsconfig.json 配置
+- 启用严格模式：`"strict": true`
+- 目标版本：`"target": "ES2020"`
+- 模块系统：`"module": "CommonJS"`
+- 生成声明文件：`"declaration": true`
+
+### 包管理规范
+- 使用 [package.json](mdc:package.json) 作为配置参考
+- 引擎要求：`"node": ">=18.0.0"`
+- 依赖管理：将 SDK 作为依赖项添加
+
+## 文档规范
+
+### 代码注释
+- 使用 JSDoc 格式注释公共方法
+- 为复杂逻辑添加解释性注释
+- 类型注释使用中文，代码注释使用中文
+
+### 文件头部
+- 每个文件顶部添加描述性注释
+- 包含文件用途和主要功能说明
+
+```typescript
+/**
+ * 插件基类定义
+ * 
+ * 提供所有插件的通用功能和接口定义
+ * 包含执行上下文、端口配置、生命周期管理等
+ */
+```

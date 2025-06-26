@@ -3,3 +3,71 @@ description:
 globs:
 alwaysApply: false
 ---
+# Cursor Rules 总览
+
+## 自动化插件 SDK 规则指南
+
+本项目为 **@choiceform/automation-sdk** 创建了完整的 Cursor Rules 规则集，帮助 AI 助手更好地理解和开发这个自动化插件 SDK。
+
+## 规则文件列表
+
+### 1. 项目结构指南
+- **文件**: [project-structure.mdc](mdc:.cursor/rules/project-structure.mdc)
+- **内容**: 项目整体结构、核心文件说明、开发规则
+- **用途**: 帮助理解项目架构和开发约定
+
+### 2. 插件开发规范
+- **文件**: [plugin-development.mdc](mdc:.cursor/rules/plugin-development.mdc)
+- **内容**: 插件类型、业务域、开发流程、实现要点
+- **用途**: 指导插件的创建和开发过程
+
+### 3. TypeScript 规范
+- **文件**: [typescript-standards.mdc](mdc:.cursor/rules/typescript-standards.mdc)
+- **内容**: 类型定义、代码结构、配置规范、文档标准
+- **用途**: 确保代码质量和类型安全
+
+### 4. CLI 命令规范
+- **文件**: [cli-commands.mdc](mdc:.cursor/rules/cli-commands.mdc)
+- **内容**: 命令结构、开发规范、模板系统、工具集成
+- **用途**: 指导 CLI 工具的使用和开发
+
+### 5. 测试规范
+- **文件**: [testing-standards.mdc](mdc:.cursor/rules/testing-standards.mdc)
+- **内容**: 测试框架、结构、规范、覆盖率要求
+- **用途**: 确保代码质量和测试覆盖率
+
+## 关键开发原则
+
+### 技术约定
+- 使用 **pnpm** 包管理器
+- 禁止使用 **any** 类型
+- 使用 TypeScript 严格模式
+- Git 提交信息使用英文
+
+### 项目结构
+- 基于 [src/index.ts](mdc:src/index.ts) 的统一导出
+- 类型定义集中在 [src/types/index.ts](mdc:src/types/index.ts)
+- 基类定义在 [src/base/index.ts](mdc:src/base/index.ts)
+- CLI 工具在 [src/cli/](mdc:src/cli/) 目录
+
+### 插件开发
+- 继承对应的基类（TriggerNode、ActionNode 等）
+- 实现必需的抽象方法
+- 配置完整的端口和工具栏设置
+- 提供详细的测试覆盖
+
+## 使用说明
+
+这些规则文件会自动被 Cursor 加载，AI 助手在开发过程中会参考这些规则来：
+
+1. **理解项目结构** - 快速定位关键文件和功能
+2. **遵循编码规范** - 确保代码质量和一致性
+3. **使用正确的工具** - 按照项目约定使用 pnpm 等工具
+4. **实现标准功能** - 按照插件开发规范实现功能
+5. **编写有效测试** - 遵循测试规范保证代码质量
+
+## 更新维护
+
+- 规则文件应随项目发展而更新
+- 重要的项目约定变更应及时反映到规则中
+- 新的开发模式和最佳实践应添加到相应规则文件

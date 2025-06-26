@@ -3,3 +3,152 @@ description:
 globs:
 alwaysApply: false
 ---
+# 测试规范
+
+## 测试框架
+项目使用 Jest 作为主要测试框架，配置位于 `jest.config.js`。
+
+## 测试结构
+
+### 文件组织
+```
+tests/
+├── __mocks__/                    # Mock 文件
+│   └── @choiceform/
+│       └── automation-sdk.ts    # SDK Mock
+├── fixtures/                     # 测试数据
+├── helpers/                      # 测试工具
+└── *.test.ts                     # 测试文件
+```
+
+### 测试类型
+
+#### 单元测试
+- 测试单个函数或方法
+- 使用 Mock 隔离依赖
+- 覆盖正常和异常情况
+
+#### 集成测试
+- 测试插件与 SDK 的集成
+- 验证端口配置和数据流
+- 测试完整的执行流程
+
+#### 端到端测试
+- 测试完整的插件生命周期
+- 验证插件在实际环境中的表现
+- 包括创建、构建、验证、发布流程
+
+## 测试规范
+
+### 测试命名
+- 使用描述性的测试名称
+- 遵循 "should do something when condition" 格式
+- 使用中文描述测试意图
+
+```typescript
+describe('ActionNode', () => {
+  it('should execute successfully when inputs are valid', async () => {
+    // 测试逻辑
+  });
+
+  it('should return error when required input is missing', async () => {
+    // 测试逻辑
+  });
+});
+```
+
+### Mock 策略
+- 使用 [src/types/index.ts](mdc:src/types/index.ts) 定义的类型创建 Mock
+- Mock 外部依赖和网络请求
+- 提供真实的数据结构和行为
+
+### 测试数据
+- 使用 fixtures 管理测试数据
+- 创建可重用的测试数据集
+- 模拟真实的插件配置和输入
+
+## 测试实践
+
+### 插件测试
+```typescript
+import { MyPlugin } from '../src/index';
+import type { PluginExecutionContext } from '@choiceform/automation-sdk';
+
+describe('MyPlugin', () => {
+  let plugin: MyPlugin;
+  let context: PluginExecutionContext;
+
+  beforeEach(() => {
+    plugin = new MyPlugin();
+    context = {
+      nodeId: 'test-node',
+      workflowId: 'test-workflow',
+      log: jest.fn(),
+    };
+  });
+
+  it('should validate inputs correctly', async () => {
+    const inputs = { message: 'test' };
+    const isValid = await plugin.validateInputs(inputs);
+    expect(isValid).toBe(true);
+  });
+
+  it('should execute with valid inputs', async () => {
+    const inputs = { message: 'test' };
+    const result = await plugin.execute(inputs, context);
+    
+    expect(result.success).toBe(true);
+    expect(result.data).toBeDefined();
+  });
+});
+```
+
+### 配置测试
+- 验证 manifest 文件的正确性
+- 测试端口配置和工具栏设置
+- 检查类型兼容性
+
+### 错误处理测试
+- 测试异常情况的处理
+- 验证错误信息的准确性
+- 测试错误恢复机制
+
+## 覆盖率要求
+
+### 最低覆盖率
+- 语句覆盖率：80%
+- 分支覆盖率：75%
+- 函数覆盖率：90%
+- 行覆盖率：80%
+
+### 关键路径
+- 所有 public 方法必须有测试
+- 错误处理路径必须覆盖
+- 配置验证逻辑必须测试
+
+## 测试工具
+
+### Jest 配置
+- 使用 ts-jest 处理 TypeScript
+- 配置合适的测试环境
+- 启用覆盖率报告
+
+### Mock 工具
+- 使用 jest.fn() 创建函数 Mock
+- 使用 jest.spyOn() 监听方法调用
+- 提供完整的 SDK Mock 实现
+
+### 测试运行
+```bash
+# 运行所有测试
+pnpm test
+
+# 运行特定测试文件
+pnpm test -- MyPlugin.test.ts
+
+# 运行测试并生成覆盖率报告
+pnpm test -- --coverage
+
+# 监听模式
+pnpm test -- --watch
+```
