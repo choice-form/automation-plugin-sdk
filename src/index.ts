@@ -30,4 +30,9 @@ export type {
   ToolbarConfig,
   LayoutConfig,
   NodeRegistryItem,
+  // 配置相关类型
+  FieldType,
+  ConfigField,
+  SelectOption,
+  NodeConfigSchema,
 } from "./types";

@@ -4,6 +4,88 @@
  * 完全匹配 automation/packages/client/app/contents/nodes-config 的数据结构
  */
 
+// ===== 配置字段类型 =====
+
+/**
+ * 基础字段类型
+ */
+export type FieldType = "string" | "number" | "boolean" | "select" | "date";
+
+/**
+ * 选择器选项
+ */
+export interface SelectOption {
+  label: string;
+  value: string | number;
+  description?: string;
+}
+
+/**
+ * 基础配置字段定义
+ */
+export interface ConfigField {
+  /** 字段唯一标识 */
+  key: string;
+  /** 字段类型 */
+  type: FieldType;
+  /** 显示标签 */
+  label: string;
+  /** 字段描述 */
+  description?: string;
+  /** 是否必填 */
+  required?: boolean;
+  /** 默认值 */
+  defaultValue?: unknown;
+  /** 占位符文本 */
+  placeholder?: string;
+  /** 是否支持表达式 */
+  supportExpression?: boolean;
+  /** 是否敏感信息（如密码、token） */
+  sensitive?: boolean;
+  /** select类型的选项 */
+  options?: SelectOption[];
+  /** 字段验证规则 */
+  validation?: {
+    /** 最小值/最小长度 */
+    min?: number;
+    /** 最大值/最大长度 */
+    max?: number;
+    /** 正则表达式验证 */
+    pattern?: string;
+    /** 自定义验证错误信息 */
+    message?: string;
+  };
+  /** UI提示 */
+  ui?: {
+    /** 是否多行文本 */
+    multiline?: boolean;
+    /** 输入框宽度 */
+    width?: "small" | "medium" | "large" | "full";
+    /** 字段分组 */
+    group?: string;
+    /** 显示顺序 */
+    order?: number;
+    /** 是否隐藏（条件显示） */
+    hidden?: boolean;
+  };
+}
+
+/**
+ * 节点配置模式
+ */
+export interface NodeConfigSchema {
+  /** 配置字段列表 */
+  fields: ConfigField[];
+  /** 配置分组 */
+  groups?: {
+    [groupName: string]: {
+      label: string;
+      description?: string;
+      collapsed?: boolean;
+    };
+  };
+}
+
 // ===== 基础类型 =====
 
 /**
@@ -127,6 +209,8 @@ export interface AutomationNodeConfigs {
   registry: NodeRegistryItem;
   // PORT_CONFIGS条目
   ports: PortConfig;
+  // CONFIG_SCHEMA条目 - 用户配置字段定义
+  configSchema?: NodeConfigSchema;
   // TOOLBAR_CONFIGS条目
   toolbar?: ToolbarConfig; // 可选，使用默认配置
   // LAYOUT_CONFIGS条目

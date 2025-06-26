@@ -5,6 +5,7 @@ import type {
   BaseNodePort,
   PortConfig,
   NodeCategory,
+  NodeConfigSchema,
 } from "../types";
 
 /**
@@ -33,6 +34,12 @@ export abstract class PluginBase {
    * 获取端口配置
    */
   abstract getPortConfig(): PortConfig;
+
+  /**
+   * 获取配置模式（可选实现）
+   * 定义用户在使用节点时需要填写的配置字段
+   */
+  getConfigSchema?(): NodeConfigSchema;
 
   /**
    * 获取输入端口
