@@ -1,154 +1,246 @@
 /**
- * Plugin SDK Types
- * 参考 automation nodes-config 的结构设计
+ * Automation Plugin SDK Types
+ *
+ * 完全匹配 automation/packages/client/app/contents/nodes-config 的数据结构
  */
-
-// 临时使用 string 类型，后续替换为实际的 IconName 类型
-export type IconName = string
 
 // ===== 基础类型 =====
 
-export type NodeCategory = "trigger" | "action" | "transform" | "control" | "ai" | "utility"
-export type NodeComplexity = "beginner" | "intermediate" | "advanced"
+/**
+ * 节点类别 - 与automation保持一致
+ */
+export type NodeCategory =
+  | "trigger"
+  | "action"
+  | "transform"
+  | "control"
+  | "ai"
+  | "utility";
 
-// ===== Plugin 元数据 =====
+/**
+ * 节点复杂度
+ */
+export type NodeComplexity = "beginner" | "intermediate" | "advanced";
 
-export interface PluginManifest {
-  author: string,
-  category: NodeCategory,
-  complexity: NodeComplexity,
-  description: string,
-  // 如 "webhook.trigger"
-  displayName: string,
-  homepage?: string,
-  icon: IconName,
-  
-  isPopular?: boolean, 
-  license?: string,
-  // 元数据
-  metadata?: {
-    createdAt: string
-    deprecated?: boolean,
-    replacedBy?: string,
-    updatedAt?: string
-  },
-  minAutomationVersion?: string,
-  name: string,
-  // Node 基础信息
-  nodeType: string,
-  // 权限声明
-  permissions?: string[],
-  repository?: string,
-  
-  // SDK 兼容性
-  sdkVersion: string
-  subCategory?: string,
-  
-  tags: string[],
-  
-  version: string
+// ===== 端口相关类型 =====
+
+/**
+ * 端口位置
+ */
+export type PortPosition = "left" | "right" | "top" | "bottom";
+
+/**
+ * 端口角色类型 - 用于 AI 节点等复杂场景
+ */
+export type PortRole =
+  | "model" // AI 模型端口
+  | "memory" // 内存/上下文端口
+  | "tool" // 工具端口
+  | "data" // 普通数据端口
+  | "trigger" // 触发端口
+  | "control" // 控制端口
+  | "config"; // 配置端口
+
+/**
+ * 基础端口定义 - 完全匹配automation格式
+ */
+export interface BaseNodePort {
+  id: string;
+  type: "input" | "output";
+  label?: string;
+  allowMultiple?: boolean;
+  required?: boolean;
+  dataType?: string;
+  position?: PortPosition;
+  role?: PortRole;
+  description?: string;
+  group?: string;
+  order?: number;
+  placeholder?: string;
+  defaultValue?: unknown;
 }
 
-// ===== 端口定义 =====
-
-export type PortType = "input" | "output"
-export type PortDataType = "string" | "number" | "boolean" | "object" | "array" | "any"
-
-export interface PortDefinition {
-  allowMultiple?: boolean,
-  dataType?: PortDataType,
-  defaultValue?: unknown,
-  description?: string
-  group?: string,
-  id: string,
-  label?: string,
-  order?: number,
-  required?: boolean,
-  type: PortType
+/**
+ * 端口配置 - 匹配PORT_CONFIGS格式
+ */
+export interface PortConfig {
+  ports: BaseNodePort[];
+  styles?: Record<string, any>;
 }
 
-// ===== Node 配置 =====
+// ===== 工具栏相关类型 =====
 
-export interface NodeConfig {
-  ports: PortDefinition[]
-  settings?: Record<string, unknown>
-  ui?: {
-    color?: string,
-    height?: number
-    showContent?: boolean,
-    width?: number
-  }
+/**
+ * 工具栏按钮类型 - 匹配automation格式
+ */
+export type NodeToolbarButton = "run" | "delete" | "activate" | "more";
+
+/**
+ * 工具栏位置
+ */
+export type ToolbarPosition = "top" | "bottom";
+
+/**
+ * 工具栏配置 - 匹配TOOLBAR_CONFIGS格式
+ */
+export interface ToolbarConfig {
+  position: ToolbarPosition;
+  buttons: readonly NodeToolbarButton[];
+  showContent: boolean;
 }
 
-// ===== 执行上下文 =====
+// ===== 布局相关类型 =====
 
+/**
+ * 布局配置 - 匹配LAYOUT_CONFIGS格式
+ */
+export interface LayoutConfig {
+  width: number;
+  minHeight: number;
+  showContent: boolean;
+}
+
+// ===== 节点注册表类型 =====
+
+/**
+ * 节点注册信息 - 匹配NODE_REGISTRY格式
+ */
+export interface NodeRegistryItem {
+  type: string; // 格式：category.name (如 action.discord)
+  name: string;
+  description: string;
+  categoryId: NodeCategory;
+  subCategoryId?: string;
+  icon: string; // 插件内的图标文件路径，如 "icon.svg" 或 "icon.png"
+  tags: string[];
+  isPopular: boolean;
+}
+
+// ===== Automation配置类型 =====
+
+/**
+ * Automation节点完整配置
+ * 这是automation系统需要的完整配置格式
+ */
+export interface AutomationNodeConfigs {
+  // NODE_REGISTRY条目
+  registry: NodeRegistryItem;
+  // PORT_CONFIGS条目
+  ports: PortConfig;
+  // TOOLBAR_CONFIGS条目
+  toolbar?: ToolbarConfig; // 可选，使用默认配置
+  // LAYOUT_CONFIGS条目
+  layout?: LayoutConfig; // 可选，使用默认配置
+}
+
+// ===== 插件相关类型 =====
+
+/**
+ * 插件执行上下文
+ */
 export interface PluginExecutionContext {
-  createError: (message: string, code?: string) => Error,
-  environment: 'development' | 'production' | 'test',
-  executionId: string,
-  getCache: (key: string) => Promise<unknown | null>,
-  // 数据访问
-  getSecret: (key: string) => Promise<string | null>,
-  
-  // 工具函数
-  log: (level: 'info' | 'warn' | 'error', message: string, data?: unknown) => void
-  nodeId: string,
-  
-  setCache: (key: string, value: unknown, ttl?: number) => Promise<void>,
-  userId: string,
-  workflowId: string
+  nodeId: string;
+  workflowId: string;
+  userId?: string;
+  log: (
+    level: "debug" | "info" | "warn" | "error",
+    message: string,
+    data?: unknown
+  ) => void;
 }
 
-// ===== 执行结果 =====
-
+/**
+ * 插件执行结果
+ */
 export interface ExecutionResult {
-  data?: Record<string, unknown>,
-  error?: string,
-  metadata?: {
-    [key: string]: unknown,
-    executionTime?: number,
-    memoryUsage?: number
-  },
-  success: boolean
+  success: boolean;
+  data?: unknown;
+  error?: string;
 }
 
-// ===== Plugin 接口 =====
+/**
+ * 插件清单文件
+ */
+export interface PluginManifest {
+  name: string; // @choiceform/plugin-name
+  version: string;
+  description: string;
+  author: string;
 
-export interface IPlugin {
-  execute(inputs: Record<string, unknown>, context: PluginExecutionContext): Promise<ExecutionResult>,
-  getManifest(): PluginManifest,
-  getNodeConfig(): NodeConfig,
-  onInstall?(): Promise<void>,
-  onUninstall?(): Promise<void>,
-  validate?(inputs: Record<string, unknown>): Promise<boolean>
+  // 节点标识
+  nodeType: string; // @choiceform/plugin-name.category (插件格式)
+  automationNodeType: string; // category.name (automation格式)
+
+  displayName: string;
+  category: string;
+  domain: string;
+  subCategory: string;
+  icon: string; // 插件内的图标文件名，如 "icon.svg"
+  tags: string[];
+  isPopular: boolean;
+  sdkVersion: string;
+
+  // automation系统配置
+  automationConfigs: AutomationNodeConfigs;
+
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
-// ===== Plugin 注册 =====
-
+/**
+ * 插件注册表文件
+ */
 export interface PluginRegistry {
-  get(nodeType: string): IPlugin | undefined,
-  list(): PluginManifest[],
-  plugins: Map<string, IPlugin>,
-  register(plugin: IPlugin): void,
-  search(query: string): PluginManifest[],
-  unregister(nodeType: string): void
+  name: string;
+  version: string;
+  author: string;
+  submittedAt: string;
+  category: string;
+  domain: string;
+  security: {
+    level: string;
+    permissions: string[];
+    sandbox: boolean;
+    description: string;
+  };
+  testing: {
+    coverage: number;
+    testFiles: string[];
+    integrationTests: boolean;
+    performanceTests: boolean;
+  };
+  compatibility: {
+    sdkVersion: string;
+    nodeVersion: string;
+    platformVersion: string;
+  };
 }
 
-// ===== CLI 相关类型 =====
+// ===== CLI相关类型 =====
 
-export interface TemplateConfig {
-  category: NodeCategory,
-  description: string
-  files: Record<string, string>,
-  name: string,
-  ports: PortDefinition[] // 文件路径 -> 模板内容
-}
-
+/**
+ * 创建插件的选项
+ */
 export interface CreatePluginOptions {
-  author?: string,
-  category?: NodeCategory,
-  description?: string,
-  name: string,
-  outputDir?: string,
-  template: string
-} 
+  name: string;
+  author: string;
+  description: string;
+  template: string;
+  domain: string;
+  includeTests: boolean;
+  strictMode: boolean;
+  outputDir?: string;
+}
+
+/**
+ * 插件模板配置
+ */
+export interface PluginTemplate {
+  name: string;
+  value: string;
+  baseClass: string;
+  category: NodeCategory;
+  description: string;
+}

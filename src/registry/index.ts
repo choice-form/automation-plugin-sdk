@@ -1,89 +1,71 @@
-import type { IPlugin, PluginManifest } from '../types'
-
-// 定义本地接口避免类型冲突
-interface IPluginRegistry {
-  get(nodeType: string): IPlugin | undefined,
-  list(): PluginManifest[],
-  plugins: Map<string, IPlugin>,
-  register(plugin: IPlugin): void,
-  search(query: string): PluginManifest[],
-  unregister(nodeType: string): void
-}
+import type { PluginManifest } from "../types";
 
 /**
- * Plugin 注册表实现
+ * 插件注册表实现
  */
-export class PluginRegistryImpl implements IPluginRegistry {
-  public plugins = new Map<string, IPlugin>()
+export class PluginRegistryImpl {
+  private plugins: Map<string, PluginManifest> = new Map();
 
-  register(plugin: IPlugin): void {
-    const manifest = plugin.getManifest()
-    const nodeType = manifest.nodeType
-    
-    if (this.plugins.has(nodeType)) {
-      console.warn(`Plugin ${nodeType} already registered, replacing...`)
-    }
-    
-    this.plugins.set(nodeType, plugin)
-    console.log(`Plugin registered: ${nodeType}`)
+  register(manifest: PluginManifest): void {
+    this.plugins.set(manifest.automationNodeType, manifest);
   }
 
   unregister(nodeType: string): void {
-    if (this.plugins.has(nodeType)) {
-      this.plugins.delete(nodeType)
-      console.log(`Plugin unregistered: ${nodeType}`)
-    }
+    this.plugins.delete(nodeType);
   }
 
-  get(nodeType: string): IPlugin | undefined {
-    return this.plugins.get(nodeType)
+  get(nodeType: string): PluginManifest | undefined {
+    return this.plugins.get(nodeType);
   }
 
   list(): PluginManifest[] {
-    return Array.from(this.plugins.values()).map(plugin => plugin.getManifest())
+    return Array.from(this.plugins.values());
   }
 
   search(query: string): PluginManifest[] {
-    const lowerQuery = query.toLowerCase()
-    return this.list().filter(manifest => 
-      manifest.displayName.toLowerCase().includes(lowerQuery) ||
-      manifest.description.toLowerCase().includes(lowerQuery) ||
-      manifest.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
-    )
+    const lowerQuery = query.toLowerCase();
+    return this.list().filter(
+      (manifest) =>
+        manifest.name.toLowerCase().includes(lowerQuery) ||
+        manifest.description.toLowerCase().includes(lowerQuery) ||
+        manifest.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
+    );
   }
 
-  // 按分类获取
-  getByCategory(category: string): PluginManifest[] {
-    return this.list().filter(manifest => manifest.category === category)
-  }
-
-  // 获取热门插件
-  getPopular(): PluginManifest[] {
-    return this.list().filter(manifest => manifest.isPopular)
-  }
-
-  // 清空所有插件
   clear(): void {
-    this.plugins.clear()
+    this.plugins.clear();
   }
 }
 
-// 全局注册表单例
-export const globalPluginRegistry = new PluginRegistryImpl()
+/**
+ * 全局插件注册表实例
+ */
+export const globalPluginRegistry = new PluginRegistryImpl();
 
-// 便捷函数
-export function registerPlugin(plugin: IPlugin): void {
-  globalPluginRegistry.register(plugin)
+/**
+ * 注册插件
+ */
+export function registerPlugin(manifest: PluginManifest): void {
+  globalPluginRegistry.register(manifest);
 }
 
-export function getPlugin(nodeType: string): IPlugin | undefined {
-  return globalPluginRegistry.get(nodeType)
+/**
+ * 获取插件
+ */
+export function getPlugin(nodeType: string): PluginManifest | undefined {
+  return globalPluginRegistry.get(nodeType);
 }
 
+/**
+ * 列出所有插件
+ */
 export function listPlugins(): PluginManifest[] {
-  return globalPluginRegistry.list()
+  return globalPluginRegistry.list();
 }
 
+/**
+ * 搜索插件
+ */
 export function searchPlugins(query: string): PluginManifest[] {
-  return globalPluginRegistry.search(query)
-} 
+  return globalPluginRegistry.search(query);
+}

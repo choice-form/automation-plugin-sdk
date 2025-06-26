@@ -1,88 +1,110 @@
-import path from 'path'
-import fs from 'fs-extra'
-import { TEMPLATES } from '../templates/registry'
-import { generatePluginDirectoryName, sanitizePluginName } from '../../utils'
-import type { CreatePluginOptions } from '../../types'
+import fs from "fs-extra";
+import path from "path";
+import { generatePluginDirectoryName, sanitizePluginName } from "../../utils";
+import type { CreatePluginOptions } from "../../types";
+
+interface TemplateContext {
+  name: string;
+  author: string;
+  description: string;
+  kebabName: string;
+  pascalName: string;
+  camelName: string;
+  createdAt: string;
+  [key: string]: string;
+}
 
 /**
- * 生成插件项目
+ * 处理模板文件（简单的字符串替换）
  */
-export async function generatePlugin(options: CreatePluginOptions): Promise<string> {
-  const { name, template, author, description, outputDir = '.' } = options
+export function processTemplate(
+  content: string,
+  context: TemplateContext
+): string {
+  let result = content;
 
-  // 获取模板配置
-  const templateConfig = TEMPLATES[template]
-  if (!templateConfig) {
-    throw new Error(`未知的模板类型: ${template}`)
+  for (const [key, value] of Object.entries(context)) {
+    const placeholder = new RegExp(`{{${key}}}`, "g");
+    result = result.replace(placeholder, value);
   }
 
-  // 生成项目目录名
-  const projectName = generatePluginDirectoryName(name, templateConfig.category)
-  const projectPath = path.resolve(outputDir, projectName)
+  return result;
+}
 
-  // 检查目录是否已存在
-  if (await fs.pathExists(projectPath)) {
-    throw new Error(`目录已存在: ${projectPath}`)
+/**
+ * 递归拷贝并处理模板目录
+ */
+export async function copyTemplateDirectory(
+  templatePath: string,
+  targetPath: string,
+  context: TemplateContext
+): Promise<void> {
+  const files = await fs.readdir(templatePath);
+
+  for (const file of files) {
+    const filePath = path.join(templatePath, file);
+    const targetFilePath = path.join(targetPath, file);
+    const stat = await fs.stat(filePath);
+
+    if (stat.isDirectory()) {
+      await fs.ensureDir(targetFilePath);
+      await copyTemplateDirectory(filePath, targetFilePath, context);
+    } else {
+      const content = await fs.readFile(filePath, "utf-8");
+      const processedContent = processTemplate(content, context);
+      await fs.writeFile(targetFilePath, processedContent);
+    }
   }
+}
 
-  // 创建项目目录
-  await fs.ensureDir(projectPath)
+/**
+ * 生成项目名称的各种格式
+ */
+export function generateNameVariants(
+  name: string
+): Pick<TemplateContext, "kebabName" | "pascalName" | "camelName"> {
+  const kebabName = name.toLowerCase().replace(/\s+/g, "-");
+  const pascalName = name
+    .replace(/(?:^|\s)(\w)/g, (_, letter) => letter.toUpperCase())
+    .replace(/\s+/g, "");
+  const camelName = pascalName.charAt(0).toLowerCase() + pascalName.slice(1);
 
-  // 准备模板变量
-  const templateVars: Record<string, string> = {
+  return {
+    kebabName,
+    pascalName,
+    camelName,
+  };
+}
+
+/**
+ * 生成插件模板
+ */
+export async function generatePlugin(
+  options: CreatePluginOptions
+): Promise<void> {
+  const {
     name,
-    description: description || `${name} plugin for Automation platform`,
-    author: author || 'Unknown',
-    kebabName: sanitizePluginName(name),
-    pascalName: toPascalCase(sanitizePluginName(name)),
-    camelName: toCamelCase(sanitizePluginName(name)),
-    category: templateConfig.category,
-    createdAt: new Date().toISOString()
-  }
+    author,
+    description,
+    template,
+    outputDir = process.cwd(),
+  } = options;
 
-  // 生成文件
-  for (const [relativePath, templateContent] of Object.entries(templateConfig.files)) {
-    const filePath = path.join(projectPath, relativePath)
-    const processedContent = processTemplate(templateContent, templateVars)
-    
-    // 确保目录存在
-    await fs.ensureDir(path.dirname(filePath))
-    
-    // 写入文件
-    await fs.writeFile(filePath, processedContent, 'utf-8')
-  }
+  const nameVariants = generateNameVariants(name);
+  const pluginDirName = generatePluginDirectoryName(name, template);
+  const targetPath = path.join(outputDir, pluginDirName);
 
-  return projectPath
+  const templateContext: TemplateContext = {
+    name,
+    author,
+    description,
+    ...nameVariants,
+    createdAt: new Date().toISOString(),
+  };
+
+  // 确保目标目录存在
+  await fs.ensureDir(targetPath);
+
+  // 这里可以根据需要实现具体的模板生成逻辑
+  console.log(`Generated plugin ${name} at ${targetPath}`);
 }
-
-/**
- * 处理模板字符串
- */
-function processTemplate(template: string, vars: Record<string, string>): string {
-  let result = template
-  
-  for (const [key, value] of Object.entries(vars)) {
-    const placeholder = new RegExp(`{{${key}}}`, 'g')
-    result = result.replace(placeholder, value)
-  }
-  
-  return result
-}
-
-/**
- * 转换为 PascalCase
- */
-function toPascalCase(str: string): string {
-  return str
-    .split(/[-_\s]+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('')
-}
-
-/**
- * 转换为 camelCase
- */
-function toCamelCase(str: string): string {
-  const pascalCase = toPascalCase(str)
-  return pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1)
-} 

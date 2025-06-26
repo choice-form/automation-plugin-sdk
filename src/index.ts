@@ -1,17 +1,33 @@
-export * from './types'
-export * from './base'
-export * from './utils'
+export * from "./types";
+export * from "./base";
+export * from "./utils";
 
 // 注册表相关导出（避免类型冲突）
-export { 
+export {
   PluginRegistryImpl as PluginRegistry,
   globalPluginRegistry,
   registerPlugin,
   getPlugin,
   listPlugins,
-  searchPlugins
-} from './registry'
+  searchPlugins,
+} from "./registry";
 
 // 便捷导出
-export { PluginBase, TriggerNode, ActionNode, TransformNode } from './base'
-export type { PluginManifest, NodeConfig, PluginExecutionContext } from './types' 
+export { PluginBase, TriggerNode, ActionNode, TransformNode } from "./base";
+
+export { createManifest, validatePlugin, buildPlugin } from "./utils";
+
+// 类型导出
+export type {
+  PluginManifest,
+  AutomationNodeConfigs,
+  PluginExecutionContext,
+  ExecutionResult,
+  NodeCategory,
+  NodeComplexity,
+  BaseNodePort,
+  PortConfig,
+  ToolbarConfig,
+  LayoutConfig,
+  NodeRegistryItem,
+} from "./types";
