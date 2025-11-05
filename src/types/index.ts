@@ -97,14 +97,40 @@ export type NodeCategory =
   | "transform"
   | "control"
   | "ai"
-  | "utility";
+  | "utility"
+  | "ai_tool";
 
 /**
  * 节点复杂度
  */
 export type NodeComplexity = "beginner" | "intermediate" | "advanced";
 
+/**
+ * 节点位置信息
+ */
+export interface NodePosition {
+  x: number;
+  y: number;
+}
+
+/**
+ * 节点尺寸信息
+ */
+export interface NodeSize {
+  height: number;
+  width: number;
+}
+
 // ===== 端口相关类型 =====
+
+/**
+ * 端口角色类型 - 用于 AI 节点等复杂场景
+ */
+export type PortRole =
+  | "loopstart" // 循环开始端口
+  | "memory" // 内存/上下文端口
+  | "model" // AI 模型端口
+  | "tool"; // 工具端口
 
 /**
  * 端口位置
@@ -112,42 +138,63 @@ export type NodeComplexity = "beginner" | "intermediate" | "advanced";
 export type PortPosition = "left" | "right" | "top" | "bottom";
 
 /**
- * 端口角色类型 - 用于 AI 节点等复杂场景
+ * 端口形状
  */
-export type PortRole =
-  | "model" // AI 模型端口
-  | "memory" // 内存/上下文端口
-  | "tool" // 工具端口
-  | "data" // 普通数据端口
-  | "trigger" // 触发端口
-  | "control" // 控制端口
-  | "config"; // 配置端口
+export type PortShape = "circle" | "square" | "diamond" | "strip";
+
+/**
+ * 端口大小
+ */
+export type PortSize = "small" | "medium" | "large";
+
+/**
+ * 端口样式配置
+ */
+export interface PortStyleConfig {
+  color?: string;
+  icon?: string;
+  label?: string;
+  shape?: PortShape;
+  size?: PortSize;
+}
 
 /**
  * 基础端口定义 - 完全匹配automation格式
  */
 export interface BaseNodePort {
-  id: string;
-  type: "input" | "output";
-  label?: string;
   allowMultiple?: boolean;
-  required?: boolean;
   dataType?: string;
+  id: number;
+  label?: string;
   position?: PortPosition;
+  required?: boolean;
   role?: PortRole;
+  style?: PortStyleConfig;
+  type: "input" | "output";
+}
+
+/**
+ * 扩展端口定义
+ */
+export interface ExtendedNodePort extends BaseNodePort {
+  defaultValue?: unknown;
   description?: string;
   group?: string;
   order?: number;
   placeholder?: string;
-  defaultValue?: unknown;
 }
+
+/**
+ * 统一端口类型
+ */
+export type NodePort = BaseNodePort | ExtendedNodePort;
 
 /**
  * 端口配置 - 匹配PORT_CONFIGS格式
  */
 export interface PortConfig {
-  ports: BaseNodePort[];
-  styles?: Record<string, any>;
+  ports: NodePort[];
+  styles?: Record<string, PortStyleConfig>;
 }
 
 // ===== 工具栏相关类型 =====
@@ -166,36 +213,184 @@ export type ToolbarPosition = "top" | "bottom";
  * 工具栏配置 - 匹配TOOLBAR_CONFIGS格式
  */
 export interface ToolbarConfig {
-  position: ToolbarPosition;
   buttons: readonly NodeToolbarButton[];
+  position: ToolbarPosition;
   showContent: boolean;
 }
 
 // ===== 布局相关类型 =====
 
 /**
+ * 参数展示类型
+ */
+export type ParameterDisplayType =
+  | "string" // 默认字符串
+  | "expression" // 表达式（显示为代码）
+  | "array" // 数组（显示元素数量）
+  | "percentage" // 百分比
+  | "badge" // 标签样式
+  | "boolean" // 布尔值（是/否）
+  | "number" // 数字
+  | "date" // 日期
+  | "json"; // JSON 对象
+
+/**
+ * 节点参数预览配置
+ */
+export type NodeParameterPreview = {
+  enabled?: boolean;
+  /**
+   * 如果参数值为空(空值或空数组或空对象)，则隐藏该参数的预览
+   */
+  hideParameterIfEmpty?: boolean;
+  maxCharacters?: number;
+  parameters?: Array<{
+    displayType?: ParameterDisplayType;
+    format?: string | ((value: unknown) => string | undefined); // 自定义格式化函数或模板
+    key: string;
+    label?: string;
+  }>;
+};
+
+/**
  * 布局配置 - 匹配LAYOUT_CONFIGS格式
  */
 export interface LayoutConfig {
-  width: number;
   minHeight: number;
+  parameterPreview?: NodeParameterPreview;
   showContent: boolean;
+  width: number;
+}
+
+/**
+ * 编辑器配置
+ */
+export interface EditorConfig {
+  panes?: {
+    center?: boolean;
+    left?: boolean;
+    right?: boolean;
+  };
 }
 
 // ===== 节点注册表类型 =====
 
 /**
- * 节点注册信息 - 匹配NODE_REGISTRY格式
+ * 节点注册信息
+ * 分成插件节点和内置节点两种，靠 builtinOrPlugin 字段区分
  */
-export interface NodeRegistryItem {
-  type: string; // 格式：category.name (如 action.discord)
-  name: string;
-  description: string;
+export type NodeRegistryItem = PluginNodeRegistryItem | BuiltinNodeRegistryItem;
+
+export interface NodeRegistryItemBase {
   categoryId: NodeCategory;
-  subCategoryId?: string;
-  icon: string; // 插件内的图标文件路径，如 "icon.svg" 或 "icon.png"
+  description: string;
+  docsUrl?: string;
+  icon: string;
+  /** How many nodes of that type can be created in a workflow */
+  maxNodes?: number;
+  name: string;
   tags: string[];
+  /**
+   * agent 用到的 tool 节点需要有唯一的 name 来标识
+   */
+  toolUniqName?: string;
+}
+
+/**
+ * 插件节点注册信息
+ */
+export interface PluginNodeRegistryItem extends NodeRegistryItemBase {
+  builtinOrPlugin: "plugin";
   isPopular: boolean;
+  repository_url?: string;
+  subCategoryId?: string;
+  type: string;
+}
+
+export interface BuiltinNodeRegistryBase extends NodeRegistryItemBase {
+  builtinOrPlugin: "builtin";
+  subCategoryId?: string;
+}
+
+/**
+ * 内置节点注册信息
+ * 注：SDK中不包含具体的内置节点类型定义，实际使用时需要根据automation系统的类型定义
+ */
+export type BuiltinNodeRegistryItem = BuiltinNodeRegistryBase & {
+  type: string; // 具体类型由automation系统定义，如 "action.http_request"
+};
+
+/**
+ * 分类信息
+ */
+export interface CategoryInfo {
+  color: string;
+  description: string;
+  icon: string; // IconName类型在SDK中简化为string
+  id: NodeCategory;
+  label: string;
+  order: number;
+  subCategories?: SubCategoryInfo[];
+}
+
+/**
+ * 子分类信息
+ */
+export interface SubCategoryInfo {
+  color: string;
+  description: string;
+  icon: string; // IconName类型在SDK中简化为string
+  id: string;
+  label: string;
+  nodeCount: number;
+}
+
+// ===== 统一节点配置类型 =====
+
+/**
+ * 完整的节点配置
+ * 这是我们新的统一配置接口
+ */
+export interface NodeConfig {
+  // 编辑器配置
+  editor: EditorConfig;
+  // 布局配置
+  layout: LayoutConfig;
+  // 端口配置
+  ports: PortConfig;
+  // 基础注册信息
+  registry: NodeRegistryItem;
+  // 工具栏配置
+  toolbar: ToolbarConfig;
+}
+
+/**
+ * 节点类型配置映射
+ */
+export type NodeTypeConfigs = Record<string, Partial<NodeConfig>>;
+
+/**
+ * 配置键类型 - 用于部分配置获取
+ */
+export type ConfigKey = keyof NodeConfig;
+
+/** 插件节点类型 即 string */
+export type PluginNodeType = string;
+/** 内置节点类型 */
+export type BuiltinNodeType = string; // 在SDK中简化为string，实际使用时由automation系统定义具体类型
+/** 节点类型 */
+export type NodeType = PluginNodeType | BuiltinNodeType;
+
+/**
+ * 搜索用的节点配置数据
+ */
+export interface NodesConfigData {
+  categories: Array<CategoryInfo & { id: NodeCategory }>;
+  metadata?: {
+    timestamp: string;
+    version: string;
+  };
+  nodes: NodeRegistryItem[];
 }
 
 // ===== Automation配置类型 =====
