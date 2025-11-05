@@ -1,9 +1,5 @@
-import type {
-  PluginManifest,
-  AutomationNodeConfigs,
-  BaseNodePort,
-  NodeCategory,
-} from "../types";
+import type { PluginManifest } from "../types/plugin";
+import type { AutomationNodeConfigs } from "../types/automation";
 
 /**
  * 创建插件清单文件
@@ -24,6 +20,7 @@ export function createManifest(options: {
   isPopular: boolean;
   sdkVersion: string;
   automationConfigs: AutomationNodeConfigs;
+  main: string;
 }): PluginManifest {
   return {
     name: options.name,
@@ -39,6 +36,7 @@ export function createManifest(options: {
     icon: options.icon,
     tags: options.tags,
     isPopular: options.isPopular,
+    main: options.main,
     sdkVersion: options.sdkVersion,
     automationConfigs: options.automationConfigs,
     metadata: {

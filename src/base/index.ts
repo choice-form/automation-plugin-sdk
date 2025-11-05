@@ -1,12 +1,10 @@
+import type { ExtendedConfigSchema } from "../types/config";
 import type {
-  PluginManifest,
   PluginExecutionContext,
   ExecutionResult,
-  BaseNodePort,
-  PortConfig,
-  NodeCategory,
-  NodeConfigSchema,
-} from "../types";
+  PluginManifest,
+} from "../types/plugin";
+import type { PortConfig, BaseNodePort } from "../types/port";
 
 /**
  * 插件基类 - 所有插件都应该继承此类
@@ -39,7 +37,7 @@ export abstract class PluginBase {
    * 获取配置模式（可选实现）
    * 定义用户在使用节点时需要填写的配置字段
    */
-  getConfigSchema?(): NodeConfigSchema;
+  getConfigSchema?(): ExtendedConfigSchema;
 
   /**
    * 获取输入端口

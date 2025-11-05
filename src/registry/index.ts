@@ -1,4 +1,4 @@
-import type { PluginManifest } from "../types";
+import type { PluginManifest } from "../types/plugin";
 
 /**
  * 插件注册表实现

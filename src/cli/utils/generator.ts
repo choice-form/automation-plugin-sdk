@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { generatePluginDirectoryName, sanitizePluginName } from "../../utils";
-import type { CreatePluginOptions } from "../../types";
+import { CreatePluginOptions } from "../../types/cli";
 
 interface TemplateContext {
   name: string;

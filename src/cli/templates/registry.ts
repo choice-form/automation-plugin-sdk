@@ -1,4 +1,4 @@
-import type { PluginTemplate } from "../../types";
+import type { PluginTemplate } from "../../types/cli";
 
 /**
  * 插件模板注册表
