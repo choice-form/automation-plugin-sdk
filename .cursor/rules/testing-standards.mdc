@@ -6,7 +6,7 @@ alwaysApply: false
 # 测试规范
 
 ## 测试框架
-项目使用 Jest 作为主要测试框架，配置位于 `jest.config.js`。
+项目使用 Vitest 作为主要测试框架，配置位于 `vitest.config.ts`。
 
 ## 测试结构
 
@@ -46,6 +46,8 @@ tests/
 - 使用中文描述测试意图
 
 ```typescript
+import { describe, it, expect } from 'vitest';
+
 describe('ActionNode', () => {
   it('should execute successfully when inputs are valid', async () => {
     // 测试逻辑
@@ -71,6 +73,7 @@ describe('ActionNode', () => {
 
 ### 插件测试
 ```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MyPlugin } from '../src/index';
 import type { PluginExecutionContext } from '@choiceform/automation-sdk';
 
@@ -83,7 +86,7 @@ describe('MyPlugin', () => {
     context = {
       nodeId: 'test-node',
       workflowId: 'test-workflow',
-      log: jest.fn(),
+      log: vi.fn(),
     };
   });
 
@@ -96,7 +99,7 @@ describe('MyPlugin', () => {
   it('should execute with valid inputs', async () => {
     const inputs = { message: 'test' };
     const result = await plugin.execute(inputs, context);
-    
+
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
   });
@@ -128,14 +131,14 @@ describe('MyPlugin', () => {
 
 ## 测试工具
 
-### Jest 配置
-- 使用 ts-jest 处理 TypeScript
-- 配置合适的测试环境
-- 启用覆盖率报告
+### Vitest 配置
+- 使用 Vitest 内置的 TypeScript 支持
+- 配置合适的测试环境（node）
+- 启用覆盖率报告（使用 v8 provider）
 
 ### Mock 工具
-- 使用 jest.fn() 创建函数 Mock
-- 使用 jest.spyOn() 监听方法调用
+- 使用 vi.fn() 创建函数 Mock
+- 使用 vi.spyOn() 监听方法调用
 - 提供完整的 SDK Mock 实现
 
 ### 测试运行

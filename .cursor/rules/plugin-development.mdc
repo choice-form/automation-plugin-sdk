@@ -40,7 +40,7 @@ SDK 支持以下插件类型，每种类型继承对应的基类：
 ### 可选文件
 - `tests/` - 测试文件目录
 - `tsconfig.json` - TypeScript 配置
-- `jest.config.js` - Jest 测试配置
+- `vitest.config.ts` - Vitest 测试配置
 
 ## 开发流程
 

@@ -204,7 +204,7 @@ export const createCommand = new Command("create")
         scripts: {
           build: "tsc",
           dev: "tsc --watch",
-          test: advancedOptions.includeTests ? "jest" : undefined,
+          test: advancedOptions.includeTests ? "vitest" : undefined,
           validate: "npx @choiceform/automation-sdk validate .",
           clean: "rm -rf dist",
         },
@@ -224,9 +224,7 @@ export const createCommand = new Command("create")
           "@types/node": "^20.0.0",
           typescript: "^5.0.0",
           ...(advancedOptions.includeTests && {
-            "@types/jest": "^29.5.0",
-            jest: "^29.5.0",
-            "ts-jest": "^29.1.0",
+            vitest: "^1.0.0",
           }),
         },
         files: [
@@ -367,7 +365,7 @@ export const createCommand = new Command("create")
           sourceMap: true,
           moduleResolution: "node",
           allowSyntheticDefaultImports: true,
-          types: ["jest", "node"],
+          types: ["vitest/globals", "node"],
         },
         include: [
           "src/**/*",
@@ -400,9 +398,9 @@ export const createCommand = new Command("create")
           testContent
         );
 
-        // 生成 Jest 配置
-        const jestConfig = generateJestConfig();
-        await fs.writeFile(path.join(pluginDir, "jest.config.js"), jestConfig);
+        // 生成 Vitest 配置
+        const vitestConfig = generateVitestConfig();
+        await fs.writeFile(path.join(pluginDir, "vitest.config.ts"), vitestConfig);
 
         // 生成 mock 文件
         await fs.ensureDir(path.join(pluginDir, "tests/__mocks__/@choiceform"));
@@ -464,7 +462,7 @@ Thumbs.db`;
       console.log(chalk.gray(`  📦 Package: @choiceform/${basicInfo.name}`));
 
       console.log(chalk.cyan("\n🚀 Next steps:"));
-      console.log(chalk.gray(`  cd ${selectedDomain.value}/${basicInfo.name}`));
+      console.log(chalk.gray(`  cd ${pluginDir}`));
       console.log(chalk.gray("  pnpm install"));
       console.log(chalk.gray("  pnpm dev"));
       if (advancedOptions.includeTests) {
@@ -716,7 +714,8 @@ function generateTestCode(
 ): string {
   const className = displayName.replace(/\s/g, "");
 
-  return `import ${className.toLowerCase()}Instance, { ${className} } from '../src/index'
+  return `import { describe, it, expect, beforeEach, vi } from 'vitest'
+import ${className.toLowerCase()}Instance, { ${className} } from '../src/index'
 
 describe('${displayName}', () => {
   let plugin: ${className};
@@ -740,7 +739,7 @@ describe('${displayName}', () => {
     const context = {
       nodeId: 'test-node',
       workflowId: 'test-workflow',
-      log: jest.fn()
+      log: vi.fn()
     }
 
     const result = await plugin.execute(inputs, context)
@@ -756,7 +755,7 @@ describe('${displayName}', () => {
     const context = {
       nodeId: 'test-node',
       workflowId: 'test-workflow',
-      log: jest.fn(() => {
+      log: vi.fn(() => {
         throw new Error('Mock error for testing')
       })
     }
@@ -955,28 +954,32 @@ function generateAutomationConfigs(
   };
 }
 
-// 生成 Jest 配置的函数
-function generateJestConfig(): string {
-  return `module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
-  testMatch: ['**/*.test.ts', '**/*.test.js'],
-  transform: {
-    '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
+// 生成 Vitest 配置的函数
+function generateVitestConfig(): string {
+  return `import { defineConfig } from 'vitest/config'
+import { fileURLToPath } from 'url'
+import path from 'path'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['tests/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.d.ts'],
+    },
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.d.ts',
-  ],
-  transformIgnorePatterns: [
-    'node_modules/(?!@choiceform)',
-  ],
-  moduleNameMapper: {
-    '^@choiceform/automation-sdk$': '<rootDir>/tests/__mocks__/@choiceform/automation-sdk.ts',
+  resolve: {
+    alias: {
+      '@choiceform/automation-sdk': path.resolve(__dirname, 'tests/__mocks__/@choiceform/automation-sdk.ts'),
+    },
   },
-};`;
+})`;
 }
 
 // 生成 Mock 文件的函数

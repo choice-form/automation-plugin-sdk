@@ -22,4 +22,4 @@ npx automation-plugin-sdk build
 
 # 发布插件
 npx automation-plugin-sdk publish
-``` 
+```

@@ -97,7 +97,7 @@ plugin-name/
 
 ### 开发工具
 - TypeScript 编译器集成
-- Jest 测试框架支持
+- Vitest 测试框架支持
 - ESLint 和 Prettier 配置
 
 ### 构建流程
