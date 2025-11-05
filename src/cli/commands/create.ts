@@ -177,7 +177,7 @@ export const createCommand = new Command("create")
       // 创建插件目录
       const pluginDir = path.resolve(
         process.cwd(),
-        `${selectedDomain.value}/${basicInfo.name}`
+        `${selectedTemplate.value}/${basicInfo.name}`
       );
 
       if (await fs.pathExists(pluginDir)) {
@@ -498,9 +498,9 @@ import type { PluginExecutionContext, ExecutionResult, PluginManifest, PortConfi
 
   const classTemplate = `/**
  * ${displayName} Plugin
- * 
+ *
  * ${basicInfo.description}
- * 
+ *
  * Domain: ${domain.description}
  * Type: ${template.category}
  */
@@ -587,7 +587,7 @@ export class ${className} extends ${template.baseClass} {
         },
         {
           id: 'output',
-          type: 'output', 
+          type: 'output',
           label: 'Response',
           allowMultiple: true
         }
@@ -598,7 +598,7 @@ export class ${className} extends ${template.baseClass} {
   async execute(inputs: Record<string, unknown>, context: PluginExecutionContext): Promise<ExecutionResult> {
     try {
       context.log('info', '${displayName} executed', inputs)
-      
+
       // 你的业务逻辑
       const result = {
         timestamp: new Date().toISOString(),
@@ -616,14 +616,14 @@ export class ${className} extends ${template.baseClass} {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误'
-      
+
       // 确保 log 调用也在 try-catch 中，避免二次错误
       try {
         context.log('error', 'Plugin execution failed', { error: errorMessage })
       } catch (logError) {
         // 如果 log 本身出错，忽略它
       }
-      
+
       return {
         success: false,
         error: errorMessage
@@ -744,7 +744,7 @@ describe('${displayName}', () => {
     }
 
     const result = await plugin.execute(inputs, context)
-    
+
     expect(result.success).toBe(true)
     expect(result.data).toBeDefined()
     expect((result.data as any).processed).toBe(true)
@@ -755,14 +755,14 @@ describe('${displayName}', () => {
     const inputs = { test: 'data' }
     const context = {
       nodeId: 'test-node',
-      workflowId: 'test-workflow', 
+      workflowId: 'test-workflow',
       log: jest.fn(() => {
         throw new Error('Mock error for testing')
       })
     }
 
     const result = await plugin.execute(inputs, context)
-    
+
     expect(result.success).toBe(false)
     expect(result.error).toBeDefined()
   })
@@ -1024,7 +1024,7 @@ export interface PortConfig {
 
 export abstract class ActionNode {
   logger?: { info: (message: string) => void };
-  
+
   abstract setup(): Promise<void>;
   abstract teardown(): Promise<void>;
   abstract getManifest(): PluginManifest;
