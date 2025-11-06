@@ -95,11 +95,6 @@ export const createCommand = new Command("create")
     console.log(chalk.cyan("🚀 Create New Plugin\n"));
 
     try {
-      // 打印 sdk 版本信息
-      console.log(
-        chalk.yellow(`🔧 SDK Version: ${require("../../package.json").version}`)
-      );
-
       // 基础信息收集
       console.log(chalk.yellow("✨ Basic Information:"));
       const basicInfo = await inquirer.prompt([
