@@ -4,6 +4,7 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
+import type { NodeRegistryItem } from "../../types/registry";
 
 // 技术模板定义
 const TECHNICAL_TEMPLATES = [
@@ -400,7 +401,10 @@ export const createCommand = new Command("create")
 
         // 生成 Vitest 配置
         const vitestConfig = generateVitestConfig();
-        await fs.writeFile(path.join(pluginDir, "vitest.config.ts"), vitestConfig);
+        await fs.writeFile(
+          path.join(pluginDir, "vitest.config.ts"),
+          vitestConfig
+        );
 
         // 生成 mock 文件
         await fs.ensureDir(path.join(pluginDir, "tests/__mocks__/@choiceform"));
@@ -517,6 +521,7 @@ export class ${className} extends ${template.baseClass} {
     return {
       name: '@choiceform/${basicInfo.name}',
       version: '1.0.0',
+      main: "dist/index.js",
       description: '${basicInfo.description}',
       author: '${basicInfo.author}',
       nodeType: '@choiceform/${basicInfo.name}.${template.category}',
@@ -543,15 +548,15 @@ export class ${className} extends ${template.baseClass} {
         ports: {
           ports: [
             {
-              id: 'input',
+              id: 0,
               type: 'input',
               label: 'Input',
-              allowMultiple: false
+              allowMultiple: true
             },
             {
-              id: 'output',
+              id: 0,
               type: 'output',
-              label: 'Response',
+              label: 'Output',
               allowMultiple: true
             }
           ]
@@ -578,56 +583,21 @@ export class ${className} extends ${template.baseClass} {
     return {
       ports: [
         {
-          id: 'input',
+          id: 0,
           type: 'input',
           label: 'Input',
-          allowMultiple: false
+          allowMultiple: true
         },
         {
-          id: 'output',
+          id: 0,
           type: 'output',
-          label: 'Response',
+          label: 'Output',
           allowMultiple: true
         }
       ]
     }
   }
 
-  async execute(inputs: Record<string, unknown>, context: PluginExecutionContext): Promise<ExecutionResult> {
-    try {
-      context.log('info', '${displayName} executed', inputs)
-
-      // 你的业务逻辑
-      const result = {
-        timestamp: new Date().toISOString(),
-        processed: true,
-        data: inputs,
-        nodeId: context.nodeId,
-        workflowId: context.workflowId,
-        domain: '${domain.value}',
-        category: '${template.category}'
-      }
-
-      return {
-        success: true,
-        data: result
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '未知错误'
-
-      // 确保 log 调用也在 try-catch 中，避免二次错误
-      try {
-        context.log('error', 'Plugin execution failed', { error: errorMessage })
-      } catch (logError) {
-        // 如果 log 本身出错，忽略它
-      }
-
-      return {
-        success: false,
-        error: errorMessage
-      }
-    }
-  }
 }
 
 // 导出插件实例
@@ -777,9 +747,10 @@ function generateAutomationConfigs(
   automationNodeType: string
 ): any {
   // 1. 生成 NODE_REGISTRY 条目
-  const registry = {
+  const registry: NodeRegistryItem = {
     type: automationNodeType, // action.discord
     name: displayName,
+    builtinOrPlugin: "plugin",
     description: basicInfo.description,
     categoryId: template.category,
     subCategoryId: domain.value,

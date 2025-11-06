@@ -18,10 +18,10 @@ export abstract class PluginBase {
 
   abstract setup?(): Promise<void>;
   abstract teardown?(): Promise<void>;
-  abstract execute(
-    inputs: Record<string, unknown>,
-    context: PluginExecutionContext
-  ): Promise<ExecutionResult>;
+  // abstract execute(
+  //   inputs: Record<string, unknown>,
+  //   context: PluginExecutionContext
+  // ): Promise<ExecutionResult>;
 
   /**
    * 获取插件清单
