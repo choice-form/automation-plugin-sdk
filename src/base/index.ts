@@ -31,7 +31,10 @@ export abstract class PluginBase {
   /**
    * 获取端口配置
    */
-  abstract getPortConfig(): PortConfig;
+  abstract getPortConfig(
+    nodeParameters: Record<string, unknown>,
+    nodeSettings: Record<string, unknown>
+  ): PortConfig;
 
   /**
    * 获取配置模式（可选实现）
@@ -42,8 +45,11 @@ export abstract class PluginBase {
   /**
    * 获取输入端口
    */
-  getInputPorts(): BaseNodePort[] {
-    return this.getPortConfig().ports.filter(
+  getInputPorts(
+    nodeParameters: Record<string, unknown>,
+    nodeSettings: Record<string, unknown>
+  ): BaseNodePort[] {
+    return this.getPortConfig(nodeParameters, nodeSettings).ports.filter(
       (port) => port.type === "input" && port.required !== false
     );
   }
@@ -51,25 +57,13 @@ export abstract class PluginBase {
   /**
    * 获取输出端口
    */
-  getOutputPorts(): BaseNodePort[] {
-    return this.getPortConfig().ports.filter((port) => port.type === "output");
-  }
-
-  /**
-   * 验证输入数据
-   */
-  async validateInputs(inputs: Record<string, unknown>): Promise<boolean> {
-    const requiredInputs = this.getInputPorts()
-      .filter((port) => port.required === true)
-      .map((port) => port.id);
-
-    for (const requiredInput of requiredInputs) {
-      if (!(requiredInput in inputs) || inputs[requiredInput] === undefined) {
-        return false;
-      }
-    }
-
-    return true;
+  getOutputPorts(
+    nodeParameters: Record<string, unknown>,
+    nodeSettings: Record<string, unknown>
+  ): BaseNodePort[] {
+    return this.getPortConfig(nodeParameters, nodeSettings).ports.filter(
+      (port) => port.type === "output"
+    );
   }
 }
 
