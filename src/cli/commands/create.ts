@@ -95,6 +95,11 @@ export const createCommand = new Command("create")
     console.log(chalk.cyan("🚀 Create New Plugin\n"));
 
     try {
+      // 打印 sdk 版本信息
+      console.log(
+        chalk.yellow(`🔧 SDK Version: ${require("../../package.json").version}`)
+      );
+
       // 基础信息收集
       console.log(chalk.yellow("✨ Basic Information:"));
       const basicInfo = await inquirer.prompt([
@@ -466,7 +471,9 @@ Thumbs.db`;
       console.log(chalk.gray(`  📦 Package: @choiceform/${basicInfo.name}`));
 
       console.log(chalk.cyan("\n🚀 Next steps:"));
-      console.log(chalk.gray(`  cd ${pluginDir}`));
+      console.log(
+        chalk.gray(`  cd ${selectedTemplate.value}/${basicInfo.name}`)
+      );
       console.log(chalk.gray("  pnpm install"));
       console.log(chalk.gray("  pnpm dev"));
       if (advancedOptions.includeTests) {
