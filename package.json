@@ -1,6 +1,6 @@
 {
   "name": "@choiceform/automation-sdk",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "description": "Plugin SDK for Automation Platform - build powerful workflow nodes and extensions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

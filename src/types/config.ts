@@ -15,7 +15,8 @@ export type FieldsFieldType =
   | "number"
   | "boolean"
   | "select"
-  | "date";
+  | "date"
+  | "array[string]";
 
 export type FieldComponent =
   | "switch"
@@ -31,6 +32,25 @@ export type FieldComponent =
   | "range";
 
 /**
+ * 普通选择器的选项
+ */
+export type ExtendedFieldOption = {
+  icon?: ReactNode;
+  label: string | PluginI18nText;
+  value: string;
+};
+
+type ExtendedFieldCollection = {
+  label: string | PluginI18nText;
+  values: Array<ExtendedFieldConfig>;
+};
+
+export type ExtendedFieldConfigOption =
+  | ExtendedFieldOption
+  | ExtendedFieldConfig
+  | ExtendedFieldCollection;
+
+/**
  * 配置字段
  */
 export interface ExtendedFieldConfig {
@@ -39,16 +59,14 @@ export interface ExtendedFieldConfig {
   hint?: string | PluginI18nText;
   key: string;
   label?: string | PluginI18nText;
-  options?: Array<{
-    icon?: ReactNode;
-    label: string | PluginI18nText;
-    value: string;
-  }>;
+  options?: Array<ExtendedFieldConfigOption>;
   placeholder?: string | PluginI18nText;
   required?: boolean;
   sensitive?: boolean;
+  defaultValue?: unknown;
   supportExpression?: boolean;
   type: FieldsFieldType;
+  fieldPath?: string;
   ui?: {
     /**
      * 单选字段允许清除已选中
@@ -89,6 +107,7 @@ export interface ExtendedGroupConfig {
   label: string | PluginI18nText;
   fields: Array<string>;
   key: string;
+  sort?: number;
 }
 
 /**
