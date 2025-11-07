@@ -39,7 +39,7 @@ export type ConfigKey = keyof NodeConfig;
 /** 插件节点类型 即 string */
 export type PluginNodeType = string;
 /** 内置节点类型 */
-export type BuiltinNodeType = string; // 在SDK中简化为string，实际使用时由automation系统定义具体类型
+type BuiltinNodeType = string; // 在SDK中简化为string，实际使用时由automation系统定义具体类型
 /** 节点类型 */
 export type NodeType = PluginNodeType | BuiltinNodeType;
 

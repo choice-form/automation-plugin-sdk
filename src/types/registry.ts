@@ -37,7 +37,7 @@ export interface PluginNodeRegistryItem extends NodeRegistryItemBase {
   type: string;
 }
 
-export interface BuiltinNodeRegistryBase extends NodeRegistryItemBase {
+interface BuiltinNodeRegistryBase extends NodeRegistryItemBase {
   builtinOrPlugin: "builtin";
   subCategoryId?: string;
 }
@@ -46,7 +46,7 @@ export interface BuiltinNodeRegistryBase extends NodeRegistryItemBase {
  * 内置节点注册信息
  * 注：SDK中不包含具体的内置节点类型定义，实际使用时需要根据automation系统的类型定义
  */
-export type BuiltinNodeRegistryItem = BuiltinNodeRegistryBase & {
+type BuiltinNodeRegistryItem = BuiltinNodeRegistryBase & {
   type: string; // 具体类型由automation系统定义，如 "action.http_request"
 };
 
