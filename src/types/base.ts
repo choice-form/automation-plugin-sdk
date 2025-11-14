@@ -12,7 +12,8 @@ export type NodeCategory =
   | "control"
   | "ai"
   | "utility"
-  | "ai_tool";
+  | "ai_tool"
+  | "ai_memory";
 
 /**
  * 节点复杂度
