@@ -37,7 +37,7 @@ export interface PluginNodeRegistryItem extends NodeRegistryItemBase {
   type: string;
 }
 
-interface BuiltinNodeRegistryBase extends NodeRegistryItemBase {
+export interface BuiltinNodeRegistryBase extends NodeRegistryItemBase {
   builtinOrPlugin: "builtin";
   subCategoryId?: string;
 }
