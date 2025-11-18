@@ -751,6 +751,7 @@ function generateAutomationConfigs(
   // 1. 生成 NODE_REGISTRY 条目
   const registry: NodeRegistryItem = {
     type: automationNodeType, // action.discord
+    typeVersion: 1,
     name: displayName,
     builtinOrPlugin: "plugin",
     description: basicInfo.description,

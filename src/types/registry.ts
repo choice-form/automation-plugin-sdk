@@ -24,6 +24,12 @@ export interface NodeRegistryItemBase {
    * agent 用到的 tool 节点需要有唯一的 name 来标识
    */
   toolUniqName?: string;
+  /**
+   * 注意这个 typeVersion 是用来做参数兼容的，
+   * 如果某个节点的参数改动对执行逻辑有大的影响，
+   * 需要做一个新的节点（拿代码节点做例子，新加一个节点 type: "action.code.v2" 和现有的节点 type: "action.code" 并存）
+   */
+  typeVersion: number | undefined;
 }
 
 /**
