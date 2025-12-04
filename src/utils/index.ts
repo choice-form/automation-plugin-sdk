@@ -65,12 +65,12 @@ export function validatePlugin(manifest: PluginManifest): {
     errors.push("automationNodeType is required");
 
   // 端口配置验证
-  if (!manifest.automationConfigs?.ports?.ports) {
+  if (!manifest.automationConfigs?.ports) {
     errors.push("ports configuration is required");
   } else {
-    const ports = manifest.automationConfigs.ports.ports;
-    const inputPorts = ports.filter((p) => p.type === "input");
-    const outputPorts = ports.filter((p) => p.type === "output");
+    const inputPorts = manifest.automationConfigs.ports.inputPorts;
+    const outputPorts = manifest.automationConfigs.ports.outputPorts;
+    const ports = [...inputPorts, ...outputPorts];
 
     if (inputPorts.length === 0 && outputPorts.length === 0) {
       errors.push("at least one input or output port is required");

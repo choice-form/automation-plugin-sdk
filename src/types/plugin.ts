@@ -121,7 +121,8 @@ export interface UnifiedPluginData {
     };
     layout?: LayoutConfig;
     ports?: {
-      ports: Array<NodePort>;
+      inputPorts: Array<NodePort>;
+      outputPorts: Array<NodePort>;
     };
     registry?: PluginNodeRegistryItem;
     toolbar?: {

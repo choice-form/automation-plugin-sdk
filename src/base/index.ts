@@ -49,8 +49,8 @@ export abstract class PluginBase {
     nodeParameters: Record<string, unknown>,
     nodeSettings: Record<string, unknown>
   ): BaseNodePort[] {
-    return this.getPortConfig(nodeParameters, nodeSettings).ports.filter(
-      (port) => port.type === "input" && port.required !== false
+    return this.getPortConfig(nodeParameters, nodeSettings).inputPorts.filter(
+      (port) => port.required !== false
     );
   }
 
@@ -61,9 +61,7 @@ export abstract class PluginBase {
     nodeParameters: Record<string, unknown>,
     nodeSettings: Record<string, unknown>
   ): BaseNodePort[] {
-    return this.getPortConfig(nodeParameters, nodeSettings).ports.filter(
-      (port) => port.type === "output"
-    );
+    return this.getPortConfig(nodeParameters, nodeSettings).outputPorts;
   }
 }
 

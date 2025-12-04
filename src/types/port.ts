@@ -72,6 +72,7 @@ export type NodePort = BaseNodePort | ExtendedNodePort;
  * 端口配置 - 匹配PORT_CONFIGS格式
  */
 export interface PortConfig {
-  ports: Array<NodePort>;
+  inputPorts: Array<NodePort>;
+  outputPorts: Array<NodePort>;
   styles?: Record<string, PortStyleConfig>;
 }
